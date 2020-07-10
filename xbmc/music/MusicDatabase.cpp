@@ -2744,7 +2744,9 @@ CSong CMusicDatabase::GetSongFromDataset(const dbiplus::sql_record* const record
   song.dateAdded.SetFromDBDateTime(record->at(offset + song_dateAdded).get_asString());
   song.dateNew.SetFromDBDateTime(record->at(offset + song_dateNew).get_asString());
   song.dateUpdated.SetFromDBDateTime(record->at(offset + song_dateModified).get_asString());
+  //song.iStartOffset = 0; // FIXME record->at(offset + song_iStartOffset).get_asInt();
   song.iStartOffset = record->at(offset + song_iStartOffset).get_asInt();
+  //song.iEndOffset = 0; // FIXME record->at(offset + song_iEndOffset).get_asInt();
   song.iEndOffset = record->at(offset + song_iEndOffset).get_asInt();
   song.strMusicBrainzTrackID = record->at(offset + song_strMusicBrainzTrackID).get_asString();
   song.rating = record->at(offset + song_rating).get_asFloat();
@@ -2789,8 +2791,10 @@ void CMusicDatabase::GetFileItemFromDataset(const dbiplus::sql_record* const rec
   item->GetMusicInfoTag()->SetTitle(record->at(song_strTitle).get_asString());
   item->GetMusicInfoTag()->SetDiscSubtitle(record->at(song_strDiscSubtitle).get_asString());
   item->SetLabel(record->at(song_strTitle).get_asString());
+  //item->m_lStartOffset = 0; // FIXME record->at(song_iStartOffset).get_asInt64(); // FIXME returns ->at() returns empty string
   item->m_lStartOffset = record->at(song_iStartOffset).get_asInt64();
   item->SetProperty("item_start", item->m_lStartOffset);
+  //item->m_lEndOffset = 0; // FIXME record->at(song_iEndOffset).get_asInt64();
   item->m_lEndOffset = record->at(song_iEndOffset).get_asInt64();
   item->GetMusicInfoTag()->SetMusicBrainzTrackID(record->at(song_strMusicBrainzTrackID).get_asString());
   item->GetMusicInfoTag()->SetRating(record->at(song_rating).get_asFloat());
@@ -3488,6 +3492,7 @@ bool CMusicDatabase::GetRecentlyAddedAlbumSongs(const std::string& strBaseDir, C
     // Determine the recently added albums from dateAdded (usually derived from music file
     // timestamps, nothing to do with when albums added to library)
     std::string strSQL;
+    // FIXME album doesn't have 'dateAdded'
     strSQL = PrepareSQL("SELECT songview.*, songartistview.* FROM "
         "(SELECT idAlbum, dateAdded FROM album ORDER BY dateAdded DESC LIMIT %u) AS recentalbums "
         "JOIN songview ON songview.idAlbum = recentalbums.idAlbum "
@@ -5739,8 +5744,10 @@ bool CMusicDatabase::GetSongsFullByWhere(const std::string &baseDir, const Filte
             items[items.Size() - 1]->GetMusicInfoTag()->AppendArtistRole(GetArtistRoleFromDataset(record, songArtistOffset));
         }
       }
-      catch (...)
+      catch (const std::exception & e)
       {
+        std::cerr << "caught exception: " << e.what() << std::endl;
+        CLog::Log(LOGERROR, "%s: exception: %s", __FUNCTION__, e.what());
         m_pDS->close();
         CLog::Log(LOGERROR, "%s: out of memory loading query: %s", __FUNCTION__, filter.where.c_str());
         return (items.Size() > 0);
