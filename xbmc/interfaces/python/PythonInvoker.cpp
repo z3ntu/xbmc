@@ -8,6 +8,14 @@
 
 // python.h should always be included first before any other includes
 #include <Python.h>
+#if PY_VERSION_HEX >= 0x03080000
+# define Py_BUILD_CORE
+# undef HAVE_STD_ATOMIC
+/* for access to the fields of PyInterpreterState */
+#  include "internal/pycore_pystate.h"
+# undef Py_BUILD_CORE
+# define HAVE_STD_ATOMIC
+#endif
 #include <iterator>
 
 // This is a workaround to compile Kodi against python 3.8
